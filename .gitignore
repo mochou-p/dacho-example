@@ -1,0 +1,5 @@
+# dacho-example/.gitignore
+
+/private
+/target
+

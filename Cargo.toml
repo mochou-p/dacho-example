@@ -1,0 +1,31 @@
+# dacho-example/Cargo.toml
+
+[package]
+name         = "dacho-example"
+version      = "0.1.0"
+rust-version = "1.79.0"
+authors      = ["mochou-p"]
+edition      = "2021"
+description  = "Example game for dacho"
+repository   = "https://github.com/mochou-p/dacho-example"
+license      = "MIT OR Apache-2.0"
+keywords     = ["dacho", "game", "example", "template", "3D"]
+categories   = ["game-development", "games", "multimedia", "graphics", "rendering"]
+
+[dependencies]
+dacho = { path = "../dacho/" }
+
+[profile.dev]
+opt-level = 0
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[lints.rust]
+warnings = "deny"
+
+[lints.clippy]
+all      = "deny"
+nursery  = "deny"
+pedantic = "deny"
+
