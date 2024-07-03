@@ -13,7 +13,7 @@ keywords     = ["dacho", "game", "example", "template", "3D"]
 categories   = ["game-development", "games", "multimedia", "graphics", "rendering"]
 
 [dependencies]
-dacho = "0.1.0"
+dacho = { path = "../dacho/" }
 
 [profile.dev]
 opt-level = 0
