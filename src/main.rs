@@ -2,6 +2,14 @@
 
 use dacho::prelude::*;
 
+use {
+    InnerCamera::Perspective,
+    InnerShape2D::{Quad, Circle},
+    InnerShape3D::{Cube, Sphere}
+};
+
+use Object::{Camera, Shape2D, Shape3D};
+
 fn main() {
     World::new()
         .add(&[
@@ -28,3 +36,4 @@ fn main() {
         ])
         .run();
 }
+
