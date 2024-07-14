@@ -9,6 +9,9 @@ fn main() {
     let    e1c1_id = world.spawn_child_entity(e1_id);
     let _e1c1c1_id = world.spawn_child_entity(e1c1_id);
 
+    world.spawn_component(  e1_id, ComponentA);
+    world.spawn_component(e1c1_id, ComponentB);
+
     world.remove_entity(e1c1_id);
 
     world.debug();
