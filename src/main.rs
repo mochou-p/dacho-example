@@ -2,6 +2,8 @@
 
 use dacho::prelude::*;
 
+use std::any::Any;
+
 fn main() {
     let mut world = World::new();
 
@@ -36,8 +38,8 @@ fn main() {
 
     world.spawn_component(player_id, Weapon { damage: 50 });
 
-    world.call(print_weapon_damage, &[player_id]); // passtrough IDs
-    world.call(print_player,        &[player_id]);
+    world.call_mut (change_weapon_damage, &[player_id], &100_isize);
+    world.call     (print_player,         &[player_id]            );
 
 
 
@@ -70,19 +72,24 @@ impl Component for Weapon {
     }
 }
 
-fn print_weapon_damage(world: &World, ids: &[u64]) {
+#[allow(clippy::needless_pass_by_value)]
+fn change_weapon_damage(world: &mut World, ids: &[u64], data: &dyn Any) {
     let player_id = ids[0];
 
-    let component = world.get_component::<Weapon>(player_id);
+    world.get_mut_component::<Weapon, _>(player_id, |weapon| {
+        let (_, component) = weapon.expect("None");
 
-    component.print();
+        if let Some(weapon) = component.downcast_mut::<Weapon>() {
+            weapon.damage = *data.downcast_ref::<isize>().expect("downcast None");
+        }
+    });
 }
 
 fn print_player(world: &World, ids: &[u64]) {
     let player_id = ids[0];
 
-    let player = world.get_entity(player_id);
+    let weapon = world.get_component::<Weapon>(player_id);
 
-    dbg!(&player);
+    println!("player's weapon has {} damage", weapon.expect("None").damage);
 }
 
