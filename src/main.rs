@@ -5,27 +5,21 @@ use dacho::prelude::*;
 fn main() {
     let mut world = World::new();
 
-    world.spawn("dog");
-    world.spawn("cat");
+    let parent_1_id = world.spawn_entity();
+    let  child_1_id = world.spawn_child_entity(parent_1_id);
+    let _child_2_id = world.spawn_child_entity(parent_1_id);
 
-    let (_, player) = world.spawn("player");
-
-    player.add(ComponentA { name: "A".to_string() });
-    player.add(ComponentB);
-
-    let (car_id, _) = world.spawn("car");
-    println!("car = {}\n", world.get(car_id).expect("car is None").name);
+    world.spawn_component(child_1_id, ComponentA);
+    world.spawn_component(child_1_id, ComponentB);
 
     world.debug();
 }
 
-struct ComponentA {
-    pub name: String
-}
+struct ComponentA;
 
 impl Component for ComponentA {
     fn name(&self) -> &str {
-        &self.name
+        "A"
     }
 }
 
