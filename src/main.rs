@@ -7,7 +7,7 @@ fn main() {
 
 
 
-    // component example
+    // entity and component example
     let entity1_id = world.spawn_entity();
 
     world.spawn_component(entity1_id, ComponentA);
@@ -34,7 +34,10 @@ fn main() {
     // callback example
     let player_id = world.spawn_entity();
 
-    world.call(print_player, &[player_id]); // call = temporary immediate schedule for showcase
+    world.spawn_component(player_id, Weapon { damage: 50 });
+
+    world.call(print_weapon_damage, &[player_id]); // passtrough IDs
+    world.call(print_player,        &[player_id]);
 
 
 
@@ -55,6 +58,24 @@ impl Component for ComponentB {
     fn print(&self) {
         println!("B");
     }
+}
+
+struct Weapon {
+    pub damage: isize
+}
+
+impl Component for Weapon {
+    fn print(&self) {
+        println!("weapon damage is {}", self.damage);
+    }
+}
+
+fn print_weapon_damage(world: &World, ids: &[u64]) {
+    let player_id = ids[0];
+
+    let component = world.get_component::<Weapon>(player_id);
+
+    component.print();
 }
 
 fn print_player(world: &World, ids: &[u64]) {
