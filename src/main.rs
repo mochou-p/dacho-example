@@ -6,44 +6,62 @@ fn main() {
     let mut world = World::new();
 
 
-    let e1_id = world.spawn_entity();
 
-    world.spawn_component(e1_id, ComponentA);
-    world.spawn_component(e1_id, ComponentB);
-    world.spawn_component(e1_id, ComponentB);
-    world.spawn_component(e1_id, ComponentB);
-    world.spawn_component(e1_id, ComponentA);
+    // component example
+    let entity1_id = world.spawn_entity();
 
-    world.remove_component::<ComponentA>(e1_id);  // removes the first found ComponentA
-    world.remove_components::<ComponentB>(e1_id); // removes all ComponentBs
+    world.spawn_component(entity1_id, ComponentA);
+    world.spawn_component(entity1_id, ComponentB);
+    world.spawn_component(entity1_id, ComponentB);
+    world.spawn_component(entity1_id, ComponentB);
+    world.spawn_component(entity1_id, ComponentA);
 
-
-    let e1c1_id = world.spawn_child_entity(e1_id);
-
-    world.spawn_child_entity(e1c1_id);
-    world.spawn_component(e1c1_id, ComponentB);
-
-    world.remove_entity(e1c1_id); // also removes the child and component above
+    world.remove_component ::<ComponentA>(entity1_id); // removes the first found ComponentA
+    world.remove_components::<ComponentB>(entity1_id); // removes all ComponentBs
 
 
-    world.debug();
+
+    // parent child relationship example
+    let entity1_child1_id = world.spawn_child_entity(entity1_id);
+
+    world.spawn_child_entity(entity1_child1_id);
+    world.spawn_component(entity1_child1_id, ComponentB);
+
+    world.remove_entity(entity1_child1_id); // also removes the child and component above
+
+
+
+    // callback example
+    let player_id = world.spawn_entity();
+
+    world.call(print_player, &[player_id]); // call = temporary immediate schedule for showcase
+
+
+
+    // world.debug();
 }
 
-#[allow(dead_code)]
 struct ComponentA;
 
 impl Component for ComponentA {
-    fn name(&self) -> &str {
-        "A"
+    fn print(&self) {
+        println!("A");
     }
 }
 
-#[allow(dead_code)]
 struct ComponentB;
 
 impl Component for ComponentB {
-    fn name(&self) -> &str {
-        "B"
+    fn print(&self) {
+        println!("B");
     }
+}
+
+fn print_player(world: &World, ids: &[u64]) {
+    let player_id = ids[0];
+
+    let player = world.get_entity(player_id);
+
+    dbg!(&player);
 }
 
