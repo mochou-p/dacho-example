@@ -5,16 +5,16 @@ use dacho::prelude::*;
 fn main() {
     let mut world = World::new();
 
-    let parent_1_id = world.spawn_entity();
-    let  child_1_id = world.spawn_child_entity(parent_1_id);
-    let _child_2_id = world.spawn_child_entity(parent_1_id);
+    let      e1_id = world.spawn_entity();
+    let    e1c1_id = world.spawn_child_entity(e1_id);
+    let _e1c1c1_id = world.spawn_child_entity(e1c1_id);
 
-    world.spawn_component(child_1_id, ComponentA);
-    world.spawn_component(child_1_id, ComponentB);
+    world.remove_entity(e1c1_id);
 
     world.debug();
 }
 
+#[allow(dead_code)]
 struct ComponentA;
 
 impl Component for ComponentA {
@@ -23,6 +23,7 @@ impl Component for ComponentA {
     }
 }
 
+#[allow(dead_code)]
 struct ComponentB;
 
 impl Component for ComponentB {
