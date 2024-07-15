@@ -40,9 +40,12 @@ fn main() {
     world.spawn_component(player_id, Item   { name:   String::from("potion") });
     world.spawn_component(player_id, Item   { name:   String::from("key")    });
 
-    world.call_mut (change_damage, &[player_id], &100_isize);
-    world.call     ( print_damage, &[player_id]            );
-    world.call     ( print_items,  &[player_id]            );
+    let nothing = &None::<()>; // variable just to show intent (no callback passtrough data)
+
+    world.call_mut (change_damage,   &[player_id], &100_isize);
+    world.call_mut (uppercase_items, &[player_id], nothing   );
+    world.call     (print_damage,    &[player_id]            );
+    world.call     (print_items,     &[player_id]            );
 
 
 
@@ -67,13 +70,27 @@ impl Component for Item {}
 
 fn change_damage(world: &mut World, ids: &[Id], data: &dyn Any) {
     if let Some(player_id) = ids.first() {
-        world.get_mut_component::<Weapon, _>(*player_id, |weapon_option| {
-            if let Some(weapon) = weapon_option {
-                if let Some(damage) = data.downcast_ref::<isize>() {
-                    weapon.damage = *damage;
-                }
+        world.get_mut_component::<Weapon, _>(*player_id, |weapon| {
+            if let Some(damage) = data.downcast_ref::<isize>() {
+                weapon.damage = *damage;
             }
         });
+    }
+}
+
+fn uppercase_items(world: &mut World, ids: &[Id], _: &dyn Any) {
+    if let Some(player_id) = ids.first() {
+        world.get_mut_components::<Item, _>(*player_id, |item| {
+            item.name = item.name.to_uppercase();
+        });
+    }
+}
+
+fn print_damage(world: &World, ids: &[Id]) {
+    if let Some(player_id) = ids.first() {
+        if let Some(weapon) = world.get_component::<Weapon>(*player_id) {
+            println!("player's damage = {}", weapon.damage);
+        }
     }
 }
 
@@ -86,14 +103,6 @@ fn print_items(world: &World, ids: &[Id]) {
         }
 
         println!();
-    }
-}
-
-fn print_damage(world: &World, ids: &[Id]) {
-    if let Some(player_id) = ids.first() {
-        if let Some(weapon) = world.get_component::<Weapon>(*player_id) {
-            println!("player's damage = {}", weapon.damage);
-        }
     }
 }
 
