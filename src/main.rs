@@ -24,12 +24,12 @@ fn main() {
 
 
     // parent child relationship example
-    let entity1_child1_id = world.spawn_child_entity(entity1_id);
+    if let Some(entity1_child1_id) = world.spawn_child_entity(entity1_id) {
+        world.spawn_child_entity(entity1_child1_id);
+        world.spawn_component(entity1_child1_id, ComponentB);
 
-    world.spawn_child_entity(entity1_child1_id);
-    world.spawn_component(entity1_child1_id, ComponentB);
-
-    world.remove_entity(entity1_child1_id); // also removes the child and component above
+        world.remove_entity(entity1_child1_id); // also removes the child and component above
+    }
 
 
 
@@ -76,8 +76,12 @@ impl Component for Weapon {
 fn change_weapon_damage(world: &mut World, ids: &[u64], data: &dyn Any) {
     let player_id = ids[0];
 
-    world.get_mut_component::<Weapon, _>(player_id, |weapon| {
-        weapon.damage = *data.downcast_ref::<isize>().expect("downcast None");
+    world.get_mut_component::<Weapon, _>(player_id, |weapon_option| {
+        if let Some(weapon) = weapon_option {
+            if let Some(damage) = data.downcast_ref::<isize>() {
+                weapon.damage = *damage;
+            }
+        }
     });
 }
 
