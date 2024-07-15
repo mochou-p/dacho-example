@@ -47,30 +47,15 @@ fn main() {
 }
 
 struct ComponentA;
-
-impl Component for ComponentA {
-    fn print(&self) {
-        println!("A");
-    }
-}
+impl Component for ComponentA {}
 
 struct ComponentB;
-
-impl Component for ComponentB {
-    fn print(&self) {
-        println!("B");
-    }
-}
+impl Component for ComponentB {}
 
 struct Weapon {
     pub damage: isize
 }
-
-impl Component for Weapon {
-    fn print(&self) {
-        println!("weapon damage is {}", self.damage);
-    }
-}
+impl Component for Weapon {}
 
 #[allow(clippy::needless_pass_by_value)]
 fn change_weapon_damage(world: &mut World, ids: &[u64], data: &dyn Any) {
