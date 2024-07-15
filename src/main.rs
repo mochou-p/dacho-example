@@ -77,11 +77,7 @@ fn change_weapon_damage(world: &mut World, ids: &[u64], data: &dyn Any) {
     let player_id = ids[0];
 
     world.get_mut_component::<Weapon, _>(player_id, |weapon| {
-        let (_, component) = weapon.expect("None");
-
-        if let Some(weapon) = component.downcast_mut::<Weapon>() {
-            weapon.damage = *data.downcast_ref::<isize>().expect("downcast None");
-        }
+        weapon.damage = *data.downcast_ref::<isize>().expect("downcast None");
     });
 }
 
