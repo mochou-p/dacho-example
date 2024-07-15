@@ -2,8 +2,6 @@
 
 use dacho::prelude::*;
 
-use std::any::Any;
-
 fn main() {
     let mut world = World::new();
 
@@ -40,12 +38,10 @@ fn main() {
     world.spawn_component(player_id, Item   { name:   String::from("potion") });
     world.spawn_component(player_id, Item   { name:   String::from("key")    });
 
-    let nothing = &None::<()>; // variable just to show intent (no callback passtrough data)
-
-    world.call_mut (change_damage,   &[player_id], &100_isize);
-    world.call_mut (uppercase_items, &[player_id], nothing   );
-    world.call     (print_damage,    &[player_id]            );
-    world.call     (print_items,     &[player_id]            );
+    world.call_mut (change_damage,   &[player_id], 100);
+    world.call_mut (uppercase_items, &[player_id], () );
+    world.call     (print_damage,    &[player_id]     );
+    world.call     (print_items,     &[player_id]     );
 
 
 
@@ -68,17 +64,15 @@ struct Item {
 }
 impl Component for Item {}
 
-fn change_damage(world: &mut World, ids: &[Id], data: &dyn Any) {
+fn change_damage(world: &mut World, ids: &[Id], new_damage: isize) {
     if let Some(player_id) = ids.first() {
         world.get_mut_component::<Weapon, _>(*player_id, |weapon| {
-            if let Some(damage) = data.downcast_ref::<isize>() {
-                weapon.damage = *damage;
-            }
+            weapon.damage = new_damage;
         });
     }
 }
 
-fn uppercase_items(world: &mut World, ids: &[Id], _: &dyn Any) {
+fn uppercase_items(world: &mut World, ids: &[Id], _: ()) {
     if let Some(player_id) = ids.first() {
         world.get_mut_components::<Item, _>(*player_id, |item| {
             item.name = item.name.to_uppercase();
