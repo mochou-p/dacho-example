@@ -36,10 +36,13 @@ fn main() {
     // callback example
     let player_id = world.spawn_entity();
 
-    world.spawn_component(player_id, Weapon { damage: 50 });
+    world.spawn_component(player_id, Weapon { damage: 50                     });
+    world.spawn_component(player_id, Item   { name:   String::from("potion") });
+    world.spawn_component(player_id, Item   { name:   String::from("key")    });
 
-    world.call_mut (change_weapon_damage, &[player_id], &100_isize);
-    world.call     (print_player,         &[player_id]            );
+    world.call_mut (change_damage, &[player_id], &100_isize);
+    world.call     ( print_damage, &[player_id]            );
+    world.call     ( print_items,  &[player_id]            );
 
 
 
@@ -57,8 +60,12 @@ struct Weapon {
 }
 impl Component for Weapon {}
 
-#[allow(clippy::needless_pass_by_value)]
-fn change_weapon_damage(world: &mut World, ids: &[Id], data: &dyn Any) {
+struct Item {
+    pub name: String
+}
+impl Component for Item {}
+
+fn change_damage(world: &mut World, ids: &[Id], data: &dyn Any) {
     if let Some(player_id) = ids.first() {
         world.get_mut_component::<Weapon, _>(*player_id, |weapon_option| {
             if let Some(weapon) = weapon_option {
@@ -70,11 +77,23 @@ fn change_weapon_damage(world: &mut World, ids: &[Id], data: &dyn Any) {
     }
 }
 
-fn print_player(world: &World, ids: &[Id]) {
+fn print_items(world: &World, ids: &[Id]) {
     if let Some(player_id) = ids.first() {
-        let weapon = world.get_component::<Weapon>(*player_id);
+        print!("player's items: ");
 
-        println!("player's weapon has {} damage", weapon.expect("None").damage);
+        for item in &world.get_components::<Item>(*player_id) {
+            print!("{}, ", item.name);
+        }
+
+        println!();
+    }
+}
+
+fn print_damage(world: &World, ids: &[Id]) {
+    if let Some(player_id) = ids.first() {
+        if let Some(weapon) = world.get_component::<Weapon>(*player_id) {
+            println!("player's damage = {}", weapon.damage);
+        }
     }
 }
 
