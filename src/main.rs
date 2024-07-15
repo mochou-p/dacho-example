@@ -38,31 +38,19 @@ fn main() {
     world.spawn_component(player_id, Item   { name:   String::from("potion") });
     world.spawn_component(player_id, Item   { name:   String::from("key")    });
 
-    world.call_mut (change_damage,   &[player_id], 100);
-    world.call_mut (uppercase_items, &[player_id], () );
-    world.call     (print_damage,    &[player_id]     );
-    world.call     (print_items,     &[player_id]     );
+    world.spawn_components(player_id, 3, Chest);
+
+    world.call_mut(change_damage,   &[player_id], 100);
+    world.call_mut(uppercase_items, &[player_id], () );
+
+    world.call(print_damage, &[player_id]);
+    world.call(print_items,  &[player_id]);
+    world.call(print_chests, &[player_id]);
 
 
 
     // world.debug();
 }
-
-struct ComponentA;
-impl Component for ComponentA {}
-
-struct ComponentB;
-impl Component for ComponentB {}
-
-struct Weapon {
-    pub damage: isize
-}
-impl Component for Weapon {}
-
-struct Item {
-    pub name: String
-}
-impl Component for Item {}
 
 fn change_damage(world: &mut World, ids: &[Id], new_damage: isize) {
     if let Some(player_id) = ids.first() {
@@ -99,4 +87,30 @@ fn print_items(world: &World, ids: &[Id]) {
         println!();
     }
 }
+
+fn print_chests(world: &World, ids: &[Id]) {
+    if let Some(player_id) = ids.first() {
+        println!("player has {} chests", world.get_components::<Chest>(*player_id).len());
+    }
+}
+
+struct ComponentA;
+impl Component for ComponentA {}
+
+struct ComponentB;
+impl Component for ComponentB {}
+
+struct Weapon {
+    pub damage: isize
+}
+impl Component for Weapon {}
+
+struct Item {
+    pub name: String
+}
+impl Component for Item {}
+
+#[derive(Clone, Copy)]
+struct Chest;
+impl Component for Chest {}
 
