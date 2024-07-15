@@ -58,7 +58,7 @@ struct Weapon {
 impl Component for Weapon {}
 
 #[allow(clippy::needless_pass_by_value)]
-fn change_weapon_damage(world: &mut World, ids: &[u64], data: &dyn Any) {
+fn change_weapon_damage(world: &mut World, ids: &[Id], data: &dyn Any) {
     let player_id = ids[0];
 
     world.get_mut_component::<Weapon, _>(player_id, |weapon_option| {
@@ -70,7 +70,7 @@ fn change_weapon_damage(world: &mut World, ids: &[u64], data: &dyn Any) {
     });
 }
 
-fn print_player(world: &World, ids: &[u64]) {
+fn print_player(world: &World, ids: &[Id]) {
     let player_id = ids[0];
 
     let weapon = world.get_component::<Weapon>(player_id);
