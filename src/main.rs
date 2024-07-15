@@ -59,22 +59,22 @@ impl Component for Weapon {}
 
 #[allow(clippy::needless_pass_by_value)]
 fn change_weapon_damage(world: &mut World, ids: &[Id], data: &dyn Any) {
-    let player_id = ids[0];
-
-    world.get_mut_component::<Weapon, _>(player_id, |weapon_option| {
-        if let Some(weapon) = weapon_option {
-            if let Some(damage) = data.downcast_ref::<isize>() {
-                weapon.damage = *damage;
+    if let Some(player_id) = ids.first() {
+        world.get_mut_component::<Weapon, _>(*player_id, |weapon_option| {
+            if let Some(weapon) = weapon_option {
+                if let Some(damage) = data.downcast_ref::<isize>() {
+                    weapon.damage = *damage;
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 fn print_player(world: &World, ids: &[Id]) {
-    let player_id = ids[0];
+    if let Some(player_id) = ids.first() {
+        let weapon = world.get_component::<Weapon>(*player_id);
 
-    let weapon = world.get_component::<Weapon>(player_id);
-
-    println!("player's weapon has {} damage", weapon.expect("None").damage);
+        println!("player's weapon has {} damage", weapon.expect("None").damage);
+    }
 }
 
