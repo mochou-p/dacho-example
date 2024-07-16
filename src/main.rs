@@ -8,6 +8,8 @@ fn main() {
     world.start(|_|     print_number(0)              );
     world.start(|world| spawn_enemy(world, "bad guy"));
 
+    world.update(|_|    print!("."));
+
     world.run();
 }
 
