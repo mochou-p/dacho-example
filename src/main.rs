@@ -31,17 +31,19 @@ fn main() {
 
 
 
-    // callback example
+    // callback examples
     let player_id = world.spawn_entity();
 
     world.spawn_component(player_id, Weapon { damage: 50                     });
     world.spawn_component(player_id, Item   { name:   String::from("potion") });
     world.spawn_component(player_id, Item   { name:   String::from("key")    });
 
+    world.spawn_components(player_id, 2, Chest);
     world.spawn_components(player_id, 3, Chest);
+    world.spawn_components(player_id, 5, Chest);
 
-    // 2nd argument in World::call* is optional passtrough data,
-    // omittable with `()` for void, meaning nothing
+    // call = callbacks run instantly
+    // callback data type is fully dependant on your function parameter
     world.call_mut(change_damage,   (player_id, 100));
     world.call_mut(uppercase_items,  player_id      );
 
@@ -49,9 +51,32 @@ fn main() {
     world.call(print_items,  player_id);
     world.call(print_chests, player_id);
 
+    // start = runs when the world is ran
+    // callback data type is Any
+    // so make sure to strongly type your data
+    // to not fail the downcast you will need
+    // inside the callback
+    world.start(print_number, 0_usize);
+    //                          ^^^^^
+    //                           vvvvvv
+    world.start_mut(spawn_enemy, String::from("bad guy"));
 
 
-    // world.debug();
+    world.run();
+}
+
+fn print_number(_: &World, data: &Box<dyn Any>) {
+    if let Some(number) = data.downcast_ref::<usize>() {
+        println!("0 = {number}");
+    }
+}
+
+fn spawn_enemy(world: &mut World, data: &Box<dyn Any>) {
+    if let Some(name) = data.downcast_ref::<String>() {
+        world.spawn_entity();
+
+        println!("enemy \"{name}\" appeared");
+    }
 }
 
 fn change_damage(world: &mut World, (player_id, new_damage): (Id, isize)) {
