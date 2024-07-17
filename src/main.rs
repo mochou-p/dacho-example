@@ -7,7 +7,8 @@ fn main() {
 
     world.start(|world| {
         let player_id = add_player(world);
-        print_info(world, player_id);
+        capitalise_items(world, player_id);
+        print_items(world, player_id);
 
         spawn_enemy(world, "bad guy");
     });
@@ -17,24 +18,27 @@ fn main() {
     world.run();
 }
 
-struct Info {
+struct Item {
     name: String
 }
 
-impl Component for Info {}
+impl Component for Item {}
 
 fn add_player(world: &mut World) -> Id {
     let player_id = world.spawn_entity();
 
-    world.spawn_component(player_id, Info { name: String::from("P1") });
+    world.spawn_component(player_id, Item { name: String::from("weapon") });
+    world.spawn_component(player_id, Item { name: String::from("potion") });
 
     player_id
 }
 
-fn print_info(world: &World, entity_id: Id) {
-    if let Some(component) = world.get_component::<Info>(entity_id) {
-        println!("{}", component.name);
-    }
+fn capitalise_items(world: &mut World, entity_id: Id) {
+    world.get_mut_components::<Item>(entity_id, |_, item| item.name = item.name.to_uppercase());
+}
+
+fn print_items(world: &World, entity_id: Id) {
+    world.get_components::<Item>(entity_id, |_, item| println!("item \"{}\"", item.name));
 }
 
 fn spawn_enemy(world: &mut World, name: &str) {
