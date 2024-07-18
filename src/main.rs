@@ -34,11 +34,11 @@ fn add_player(world: &mut World) -> Id {
 }
 
 fn capitalise_items(world: &mut World, entity_id: Id) {
-    world.get_mut_components::<Item>(entity_id, |_, item| item.name = item.name.to_uppercase());
+    world.get_entity_mut_components::<Item>(entity_id, |item| item.name = item.name.to_uppercase());
 }
 
 fn print_items(world: &World, entity_id: Id) {
-    world.get_components::<Item>(entity_id, |_, item| println!("item \"{}\"", item.name));
+    world.get_entity_components::<Item>(entity_id, |item| println!("item \"{}\"", item.name));
 }
 
 fn spawn_enemy(world: &mut World, name: &str) {
