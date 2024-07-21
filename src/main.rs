@@ -10,8 +10,9 @@ fn main() {
     game.start(
         |world| {
             change_state(world, GameState::Menu);
+            spawn_meshes(world);
 
-            let player_id = add_player(world);
+            let player_id = spawn_player(world);
 
             capitalise_items(world, player_id);
             print_items(world, player_id);
@@ -64,7 +65,28 @@ fn state_changed(old_state: State, new_state: State) {
     }
 }
 
-fn add_player(world: &mut World) -> Id {
+fn change_state(world: &mut World, new_state: GameState) {
+    world.set_state(new_state as State);
+}
+
+fn spawn_meshes(world: &mut World) {
+    let meshes_id = world.spawn_entity();
+
+    world.spawn_component(meshes_id, Mesh::quad(V3::new(0.0, 1.0, 0.0), V2::ONE));
+
+    let mut i = 3;
+
+    for x in -4..=4 {
+        #[allow(clippy::cast_precision_loss)]
+        world.spawn_component(meshes_id, Mesh::circle(
+            V3::new(x as f32 * 0.8, 0.0, 0.0), 0.25, i, false
+        ));
+
+        i += 1;
+    }
+}
+
+fn spawn_player(world: &mut World) -> Id {
     let player_id = world.spawn_entity();
 
     world.spawn_component(player_id, Item { name: String::from("weapon") });
@@ -85,9 +107,5 @@ fn spawn_enemy(world: &mut World, name: &str) {
     world.spawn_entity();
 
     println!("enemy \"{name}\" appeared");
-}
-
-fn change_state(world: &mut World, new_state: GameState) {
-    world.set_state(new_state as State);
 }
 
