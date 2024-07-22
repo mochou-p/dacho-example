@@ -5,7 +5,10 @@ use dacho::prelude::*;
 fn main() {
     let mut game = Game::new("dacho example");
 
-    game.state(GameState::default() as State, |_, old, new| state_changed(old, new));
+    game.state(
+        GameState::default() as State,
+        |_, old, new| state_changed(old, new)
+    );
 
     game.start(
         |world| {
@@ -21,6 +24,12 @@ fn main() {
     );
 
     game.update(|_| print!("."));
+
+    game.keyboard(|_, code, action| {
+        if code == KeyCode::Space && action.is_pressed() {
+            println!("\njump!");
+        }
+    });
 
     game.run();
 }
@@ -55,8 +64,11 @@ struct Item {
 impl Component for Item {}
 
 fn state_changed(old_state: State, new_state: State) {
-    let old_game_state = GameState::try_from(old_state).expect("old_game_state");
-    let new_game_state = GameState::try_from(new_state).expect("new_game_state");
+    let old_game_state = GameState::try_from(old_state)
+        .expect("old_game_state");
+
+    let new_game_state = GameState::try_from(new_state)
+        .expect("new_game_state");
 
     #[allow(clippy::single_match)]
     match (old_game_state, new_game_state) {
@@ -72,15 +84,27 @@ fn change_state(world: &mut World, new_state: GameState) {
 fn spawn_meshes(world: &mut World) {
     let meshes_id = world.spawn_entity();
 
-    world.spawn_component(meshes_id, Mesh::quad(V3::new(0.0, 1.0, 0.0), V2::ONE));
+    world.spawn_component(
+        meshes_id,
+        Mesh::quad(
+            V3::new(0.0, 1.0, 0.0),
+            V2::ONE
+        )
+    );
 
     let mut i = 3;
 
     for x in -4..=4 {
         #[allow(clippy::cast_precision_loss)]
-        world.spawn_component(meshes_id, Mesh::circle(
-            V3::new(x as f32 * 0.8, 0.0, 0.0), 0.25, i, false
-        ));
+        world.spawn_component(
+            meshes_id,
+            Mesh::circle(
+                V3::new(x as f32 * 0.8, 0.0, 0.0),
+                0.25,
+                i,
+                false
+            )
+        );
 
         i += 1;
     }
@@ -96,11 +120,17 @@ fn spawn_player(world: &mut World) -> Id {
 }
 
 fn capitalise_items(world: &mut World, entity_id: Id) {
-    world.get_entity_mut_components::<Item>(entity_id, |item| item.name = item.name.to_uppercase());
+    world.get_entity_mut_components::<Item>(
+        entity_id,
+        |item| item.name = item.name.to_uppercase()
+    );
 }
 
 fn print_items(world: &World, entity_id: Id) {
-    world.get_entity_components::<Item>(entity_id, |item| println!("item \"{}\"", item.name));
+    world.get_entity_components::<Item>(
+        entity_id,
+        |item| println!("item \"{}\"", item.name)
+    );
 }
 
 fn spawn_enemy(world: &mut World, name: &str) {
