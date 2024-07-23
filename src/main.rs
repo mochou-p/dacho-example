@@ -23,13 +23,31 @@ fn main() {
         }
     );
 
-    game.update(|_| print!("."));
-
-    game.keyboard(|_, code, action| {
-        if code == KeyCode::Space && action.is_pressed() {
-            println!("\njump!");
+    game.keyboard(
+        |_, code, action| {
+            if code == KeyCode::Space && action.is_pressed() {
+                println!("jump!");
+            }
         }
-    });
+    );
+
+    game.mouse_button(
+        |_, button, action| {
+            if button == MouseButton::Left && action.is_pressed() {
+                println!("fire!");
+            }
+        }
+    );
+
+    game.mouse_wheel(
+        |_, _, y| {
+            if y > 0.0 {
+                println!("zoom in");
+            } else if y < 0.0 {
+                println!("zoom out");
+            }
+        }
+    );
 
     game.run();
 }
