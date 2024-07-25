@@ -113,26 +113,20 @@ fn spawn_meshes(world: &mut World) {
     world.spawn_component(
         meshes_id,
         Mesh::quad(
-            V3::new(1.0, 1.0, 0.0),
+            V3::new(1.0, 0.0, 0.0),
             V2::ONE
         )
     );
 
-    let mut i = 3;
-
-    for x in -4..=4 {
+    for x in -4..-1 {
         #[allow(clippy::cast_precision_loss)]
         world.spawn_component(
             meshes_id,
             Mesh::circle(
                 V3::new(x as f32 * 0.8, 0.0, 0.0),
-                0.25,
-                i,
-                false
+                0.3
             )
         );
-
-        i += 1;
     }
 }
 
