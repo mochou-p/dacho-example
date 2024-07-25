@@ -105,7 +105,15 @@ fn spawn_meshes(world: &mut World) {
     world.spawn_component(
         meshes_id,
         Mesh::quad(
-            V3::new(0.0, 1.0, 0.0),
+            V3::new(-1.0, 1.0, 0.0),
+            V2::ONE
+        )
+    );
+
+    world.spawn_component(
+        meshes_id,
+        Mesh::quad(
+            V3::new(1.0, 1.0, 0.0),
             V2::ONE
         )
     );
