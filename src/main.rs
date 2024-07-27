@@ -5,18 +5,18 @@ use dacho::prelude::*;
 fn main() {
     let mut game = Game::new("dacho example");
 
+    let player_id  = spawn_player(&mut game.world);
+    let player_id_ = player_id;
+
     game.state(
         GameState::default() as State,
         |_, old, new| state_changed(old, new)
     );
 
     game.start(
-        |world| {
+        move |world| {
             change_state(world, GameState::Menu);
-            spawn_meshes(world);
-
-            let player_id = spawn_player(world);
-
+            spawn_meshes(world, player_id);
             capitalise_items(world, player_id);
             print_items(world, player_id);
             spawn_enemy(world, "Bad guy");
@@ -24,9 +24,39 @@ fn main() {
     );
 
     game.keyboard(
-        |_, code, action| {
-            if code == KeyCode::Space && action.is_pressed() {
+        move |world, key, action| {
+            if key == Key::Space && action.is_pressed() {
                 println!("jump!");
+            }
+
+            if key == Key::ArrowRight && action.is_pressed() {
+                let mesh_id_option = world.get_entity_mut_component::<Mesh, Id>(
+                    player_id_,
+                    |mesh| {
+                        mesh.move_by(V3::ONE);
+
+                        mesh.id
+                    }
+                );
+
+                if let Some(mesh_id) = mesh_id_option {
+                    world.update_mesh(mesh_id);
+                }
+            } else if key == Key::ArrowLeft && action.is_pressed() {
+                let mesh_ids_option = world.get_entity_mut_components::<Mesh, Id>(
+                    player_id_,
+                    |mesh| {
+                        mesh.move_by(V3::ONE);
+
+                        mesh.id
+                    }
+                );
+
+                if let Some(mesh_ids) = mesh_ids_option {
+                    for mesh_id in &mesh_ids {
+                        world.update_mesh(*mesh_id);
+                    }
+                }
             }
         }
     );
@@ -99,11 +129,9 @@ fn change_state(world: &mut World, new_state: GameState) {
     world.set_state(new_state as State);
 }
 
-fn spawn_meshes(world: &mut World) {
-    let meshes_id = world.spawn_entity();
-
+fn spawn_meshes(world: &mut World, player_id: Id) {
     world.spawn_component(
-        meshes_id,
+        player_id,
         Mesh::quad(
             V3::new(-1.0, 1.0, 0.0),
             V2::ONE
@@ -111,7 +139,7 @@ fn spawn_meshes(world: &mut World) {
     );
 
     world.spawn_component(
-        meshes_id,
+        player_id,
         Mesh::quad(
             V3::new(1.0, 0.0, 0.0),
             V2::ONE
@@ -121,10 +149,10 @@ fn spawn_meshes(world: &mut World) {
     for x in -4..-1 {
         #[allow(clippy::cast_precision_loss)]
         world.spawn_component(
-            meshes_id,
+            player_id,
             Mesh::circle(
                 V3::new(x as f32 * 0.8, 0.0, 0.0),
-                0.3
+                0.5
             )
         );
     }
@@ -140,16 +168,20 @@ fn spawn_player(world: &mut World) -> Id {
 }
 
 fn capitalise_items(world: &mut World, entity_id: Id) {
-    world.get_entity_mut_components::<Item>(
+    world.get_entity_mut_components::<Item, _>(
         entity_id,
-        |item| item.name = item.name.to_uppercase()
+        |item| {
+            item.name = item.name.to_uppercase();
+        }
     );
 }
 
 fn print_items(world: &World, entity_id: Id) {
-    world.get_entity_components::<Item>(
+    world.get_entity_components::<Item, _>(
         entity_id,
-        |item| println!("item \"{}\"", item.name)
+        |item| {
+            println!("item \"{}\"", item.name);
+        }
     );
 }
 
