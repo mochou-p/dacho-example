@@ -5,8 +5,10 @@ use dacho::prelude::*;
 fn main() {
     let mut game = Game::new("dacho example");
 
-    let player_id  = spawn_player(&mut game.world);
-    let player_id_ = player_id;
+    let player_id    = spawn_player(&mut game.world);
+    let player_id_   = player_id;
+    let player_id__  = player_id;
+    let player_id___ = player_id;
 
     game.state(
         GameState::default() as State,
@@ -23,43 +25,9 @@ fn main() {
         }
     );
 
-    game.keyboard(
-        move |world, key, action| {
-            if key == Key::Space && action.is_pressed() {
-                println!("jump!");
-            }
+    game.update(move |world| movement(world, player_id__));
 
-            if key == Key::ArrowRight && action.is_pressed() {
-                let mesh_id_option = world.get_entity_mut_component::<Mesh, Id>(
-                    player_id_,
-                    |mesh| {
-                        mesh.move_by(V3::ONE);
-
-                        mesh.id
-                    }
-                );
-
-                if let Some(mesh_id) = mesh_id_option {
-                    world.update_mesh(mesh_id);
-                }
-            } else if key == Key::ArrowLeft && action.is_pressed() {
-                let mesh_ids_option = world.get_entity_mut_components::<Mesh, Id>(
-                    player_id_,
-                    |mesh| {
-                        mesh.move_by(V3::ONE);
-
-                        mesh.id
-                    }
-                );
-
-                if let Some(mesh_ids) = mesh_ids_option {
-                    for mesh_id in &mesh_ids {
-                        world.update_mesh(*mesh_id);
-                    }
-                }
-            }
-        }
-    );
+    game.keyboard(move |world, key, action| keyboard(world, key, action.is_pressed(), player_id_));
 
     game.mouse_button(
         |_, button, action| {
@@ -70,11 +38,22 @@ fn main() {
     );
 
     game.mouse_wheel(
-        |_, _, y| {
-            if y > 0.0 {
-                println!("zoom in");
-            } else if y < 0.0 {
-                println!("zoom out");
+        move |world, _, y| {
+            if y == 0.0 {
+                return;
+            }
+
+            let mesh_id_option = world.get_entity_mut_component::<Mesh, _>(
+                player_id___,
+                |mesh| {
+                    mesh.rotate_by(V3::Z * y * -0.1);
+
+                    mesh.id
+                }
+            );
+
+            if let Some(mesh_id) = mesh_id_option {
+                world.update_mesh(mesh_id);
             }
         }
     );
@@ -111,6 +90,20 @@ struct Item {
 
 impl Component for Item {}
 
+#[derive(Clone)]
+struct Velocity {
+    direction: V2,
+    speed:     f32
+}
+
+impl Component for Velocity {}
+
+impl Velocity {
+    const fn new(speed: f32) -> Self {
+        Self { direction: V2::ZERO, speed }
+    }
+}
+
 fn state_changed(old_state: State, new_state: State) {
     let old_game_state = GameState::try_from(old_state)
         .expect("old_game_state");
@@ -130,6 +123,8 @@ fn change_state(world: &mut World, new_state: GameState) {
 }
 
 fn spawn_meshes(world: &mut World, player_id: Id) {
+    world.spawn_component(player_id, Velocity::new(0.01));
+
     world.spawn_component(
         player_id,
         Mesh::quad(
@@ -189,5 +184,60 @@ fn spawn_enemy(world: &mut World, name: &str) {
     world.spawn_entity();
 
     println!("enemy \"{name}\" appeared");
+}
+
+fn keyboard(world: &mut World, key: Key, is_pressed: bool, player_id: Id) {
+    match key {
+        Key::Space => {
+            if is_pressed {
+                println!("jump!");
+            }
+        },
+        Key::ArrowUp | Key::ArrowLeft | Key::ArrowDown | Key::ArrowRight | Key::KeyW | Key::KeyA | Key::KeyS | Key::KeyD => {
+            world.get_entity_mut_component::<Velocity, _>(
+                player_id,
+                #[allow(clippy::cast_precision_loss)]
+                |velocity| {
+                    let sign = i32::from(is_pressed) * 2 - 1;
+
+                    velocity.direction.x += (match key {
+                        Key::ArrowLeft  | Key::KeyA => -1,
+                        Key::ArrowRight | Key::KeyD =>  1,
+                        _ => 0
+                    } * sign) as f32;
+
+                    velocity.direction.y += (match key {
+                        Key::ArrowDown  | Key::KeyS => -1,
+                        Key::ArrowUp    | Key::KeyW =>  1,
+                        _ => 0
+                    } * sign) as f32;
+                }
+            );
+        },
+        _ => ()
+    }
+}
+
+fn movement(world: &mut World, player_id: Id) {
+    let velocity_option = world.get_entity_component::<Velocity, _>(player_id, Clone::clone);
+
+    if let Some(velocity) = velocity_option {
+        if velocity.direction.is_zero() {
+            return;
+        }
+
+        let mesh_id_option = world.get_entity_mut_component::<Mesh, _>(
+            player_id,
+            |mesh| {
+                mesh.move_by(velocity.direction.extend() * velocity.speed);
+
+                mesh.id
+            }
+        );
+
+        if let Some(mesh_id) = mesh_id_option {
+            world.update_mesh(mesh_id);
+        }
+    }
 }
 
