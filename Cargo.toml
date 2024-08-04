@@ -3,7 +3,7 @@
 [package]
 name         = "dacho-example"
 version      = "0.1.0"
-rust-version = "1.79.0"
+rust-version = "1.80.0"
 authors      = ["mochou-p"]
 edition      = "2021"
 description  = "Example game for dacho"
