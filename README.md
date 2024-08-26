@@ -3,11 +3,7 @@
 # dacho example
 
 ## What is it
-This project serves as an example usage of the [dacho engine](https://github.com/mochou-p/dacho)
-
-## Notes
-- the `dev` profile requires [Vulkan Validation Layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers)
-(use `--release` otherwise)
+An example game for the [dacho engine](https://github.com/mochou-p/dacho)
 
 ## License
 Licensed under either of
