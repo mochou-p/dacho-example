@@ -27,6 +27,12 @@ pub fn handle_keyboard_input(world: &mut World, key: Key, is_pressed: bool, play
                 }
             );
         },
+        Key::Enter => {
+            world.remove_component::<Mesh>(player_id);
+        },
+        Key::Backspace => {
+            world.remove_entity(player_id);
+        },
         _ => ()
     }
 }
@@ -39,17 +45,13 @@ pub fn move_player_mesh_by_velocity(world: &mut World, player_id: Id) {
             return;
         }
 
-        let mesh_id_option = world.get_entity_mut_component::<Mesh, _>(
+        world.get_entity_mut_component::<Mesh, _>(
             player_id,
-            |mesh| {
-                mesh.move_by(velocity.direction.normalize() * velocity.speed);
-
-                mesh.id
-            }
+            |mesh| mesh.move_by(velocity.direction.normalize() * velocity.speed)
         );
 
-        if let Some(mesh_id) = mesh_id_option {
-            world.update_mesh(mesh_id);
+        if let Some(component_id) = world.get_entity_component_id::<Mesh>(player_id) {
+            world.update_mesh_component(component_id);
         }
     }
 }
