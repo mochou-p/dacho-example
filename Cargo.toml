@@ -2,8 +2,8 @@
 
 [package]
 name         = "dacho-example"
-version      = "0.1.0"
-rust-version = "1.80.0"
+version      = "0.2.0"
+rust-version = "1.80.1"
 authors      = ["mochou-p"]
 edition      = "2021"
 description  = "Example game for dacho"
@@ -13,7 +13,7 @@ keywords     = ["dacho", "game", "example", "template", "3D"]
 categories   = ["game-development", "games", "multimedia", "graphics", "rendering"]
 
 [dependencies]
-dacho = { path = "../dacho/" }
+dacho = "0.2.0"
 
 [profile.dev]
 opt-level = 0
