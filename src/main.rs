@@ -1,18 +1,27 @@
 // dacho-example/src/main.rs
 
-mod game;
+#![allow(clippy::wildcard_imports)]
 
-use dacho::prelude::*;
+use dacho::*;
 
 fn main() {
     let mut app = App::new("dacho example");
 
-    let player_id = app.world.spawn_entity();
+    app.world.spawn((Player { name: "P1", level: 1 },));
+    app.world.add_system(level_up);
+    app.world.run();
+}
 
-    app.    start(game::   start(player_id));
-    app.   update(game::  update(player_id));
-    app. keyboard(game::keyboard(player_id));
+fn level_up(query: &mut (Player,)) {
+    let (player,) = query;
 
-    app.run();
+    player.level += 1;
+
+    println!("{} leveled up! ({})", player.name, player.level);
+}
+
+struct Player {
+    name:  &'static str,
+    level:          u8
 }
 
