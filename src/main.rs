@@ -14,11 +14,8 @@ fn main() {
 }
 
 fn start((query,): (Query<(WorldComponent,)>,)) {
-    let Some(e) = query.entity()                      else { return; };
-    let Some(c) = e.get_component::<WorldComponent>() else { return; };
-
-    let     w     = c.get();
-    let mut world = w.borrow_mut();
+    let world_comp = query.one().0.borrow().get();
+    let mut world  = world_comp.borrow_mut();
 
     world.spawn((
         Player       { name: "Yonezu" },
@@ -36,46 +33,52 @@ fn start((query,): (Query<(WorldComponent,)>,)) {
 }
 
 fn print_player_weapons((player_query,): (Query<(Player,)>,)) {
-    if let Some(entities) = player_query.entities() {
-        for entity in entities {
-            let Some(player) = entity.get_component::<Player>() else { continue; };
+    for entity in player_query.entities() {
+        let Some(player) = entity.get_component::<Player>() else { continue; };
 
-            if let Some(weapons) = entity.get_components::<Weapon>() {
-                print!("Player `{}` has {} weapons {{ ", player.name, weapons.len());
+        let  weapons_o = entity.get_components::<Weapon>();
+        let active_w_o = entity.get_component ::<ActiveWeapon>();
 
-                if let Some(active_weapon) = entity.get_component::<ActiveWeapon>() {
-                    print!("\x1b[1m*{} ({:?})*\x1b[0m, ", active_weapon.0.name, active_weapon.0.rarity);
-                }
+        print!("{} ", player.borrow().name);
 
-                for weapon in &weapons {
-                    print!("{} ({:?}), ", weapon.name, weapon.rarity);
-                }
+        let mut amount  = 0;
+        let mut message = String::new();
 
-                println!("}}");
-            } else {
-                println!("Player `{}` has no weapons", player.name);
+        if let Some(active_w) = active_w_o {
+            let w    = active_w.borrow();
+
+            amount  += 1;
+            message += &format!("\x1b[1m*{} ({:?})*\x1b[0m, ", w.0.name, w.0.rarity);
+        }
+
+        if let Some(weapons) = weapons_o {
+            amount += weapons.len();
+
+            for weapon in weapons {
+                let w = weapon.borrow();
+
+                message += &format!("{} ({:?}), ", w.name, w.rarity);
             }
+        }
+
+        match amount {
+            0 => println!("has no weapons"),
+            _ => println!("has {amount} weapons: {{ {message}}}")
         }
     }
 }
 
-fn damage_boss((boss_query, player_query): (Query<(Boss,)>, Query<(Player, ActiveWeapon)>)) {
-    let mut damage = 0.0;
+fn damage_boss((q1, q2): (Query<(Boss,)>, Query<(Player, ActiveWeapon)>)) {
+    let q1_components = q1.one().0;
+    let mut boss      = q1_components.borrow_mut();
 
-    if let Some(entities) = player_query.entities() {
-        for entity in entities {
-            let Some(weapon) = entity.get_component::<ActiveWeapon>() else { continue; };
+    print!("Boss health: {} -> ", boss.health);
 
-            damage += weapon.0.damage;
-        }
+    for (_, weapon) in q2.all() {
+        boss.health -= weapon.borrow().0.damage;
     }
 
-    if damage > 0.0 {
-        let Some(entity) = boss_query.entity()            else { return; };
-        let Some(boss)   = entity.get_component::<Boss>() else { return; };
-
-        println!("Boss health: {} -> {}", boss.health, boss.health - damage);
-    }
+    println!("{}", boss.health);
 }
 
 struct Player {
