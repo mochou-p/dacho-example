@@ -1,34 +1,42 @@
 // dacho-example/src/main.rs
 
-#![allow(clippy::wildcard_imports)]
-
+#[allow(clippy::wildcard_imports)]
 use dacho::*;
 
 fn main() {
     let mut app = App::new("dacho example");
 
-    app.world.spawn((
+    app.add_system(start);
+    app.add_system(print_player_weapons);
+    app.add_system(damage_boss);
+
+    app.run();
+}
+
+fn start((query,): (Query<(WorldComponent,)>,)) {
+    let Some(e) = query.entity()                      else { return; };
+    let Some(c) = e.get_component::<WorldComponent>() else { return; };
+
+    let     w     = c.get();
+    let mut world = w.borrow_mut();
+
+    world.spawn((
         Player       { name: "Yonezu" },
         ActiveWeapon ( Weapon { name: "Stick", damage: 3.14, rarity: Rarity::Trash } ),
         Weapon       { name: "Ashbringer", damage: 917.37, rarity: Rarity::Legendary }
     ));
 
-    app.world.spawn((
+    world.spawn((
         Player { name: "Suda" },
     ));
 
-    app.world.spawn((
+    world.spawn((
         Boss { health: 100.0 },
     ));
-
-    app.world.add_system(print_player_weapons);
-    app.world.add_system(damage_boss);
-
-    app.world.run();
 }
 
 fn print_player_weapons((player_query,): (Query<(Player,)>,)) {
-    if let Some(entities) = player_query.all() {
+    if let Some(entities) = player_query.entities() {
         for entity in entities {
             let Some(player) = entity.get_component::<Player>() else { continue; };
 
@@ -54,7 +62,7 @@ fn print_player_weapons((player_query,): (Query<(Player,)>,)) {
 fn damage_boss((boss_query, player_query): (Query<(Boss,)>, Query<(Player, ActiveWeapon)>)) {
     let mut damage = 0.0;
 
-    if let Some(entities) = player_query.all() {
+    if let Some(entities) = player_query.entities() {
         for entity in entities {
             let Some(weapon) = entity.get_component::<ActiveWeapon>() else { continue; };
 
@@ -63,7 +71,7 @@ fn damage_boss((boss_query, player_query): (Query<(Boss,)>, Query<(Player, Activ
     }
 
     if damage > 0.0 {
-        let Some(entity) = boss_query.single()            else { return; };
+        let Some(entity) = boss_query.entity()            else { return; };
         let Some(boss)   = entity.get_component::<Boss>() else { return; };
 
         println!("Boss health: {} -> {}", boss.health, boss.health - damage);
