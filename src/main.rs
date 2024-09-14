@@ -12,11 +12,10 @@ fn main() {
 }
 
 fn start((query,): (Query<(WorldComponent,)>,)) {
-    let world_comp = query.one().0.borrow().get();
-    let mut world  = world_comp.borrow_mut();
-
-    world.spawn((
-        Mesh::circle(V3::ZERO, 0.5),
-    ));
+    query.one().0.borrow().get(|mut world| {
+        world.spawn((
+            Mesh::circle(V3::ZERO, 0.5),
+        ));
+    });
 }
 
