@@ -4,12 +4,10 @@
 use dacho::*;
 
 fn main() {
-    let mut app = App::new("dacho example");
-
-    app.add_system(Schedule::Start,  spawn_circle);
-    app.add_system(Schedule::Update, print_n);
-
-    app.run();
+    App::new("dacho example")
+        .add_system(Schedule::Start,  spawn_circle)
+        .add_system(Schedule::Update, print_n)
+        .run();
 }
 
 fn spawn_circle((query,): (Query<(WorldComponent,)>,)) {
