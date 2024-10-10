@@ -14,13 +14,15 @@ fn main() {
         .run();
 }
 
-fn spawn_circle((query,): (Query<(WorldComponent,)>,)) {
+#[system]
+fn spawn_circle(query: Query<(WorldComponent,)>) {
     query.one().0.borrow().get(|mut world| {
         world.spawn((MeshComponent::circle(V3::ZERO, 0.5),));
     });
 }
 
-fn print_dt((query,): (Query<(TimeComponent,)>,)) {
+#[system]
+fn print_dt(query: Query<(TimeComponent,)>) {
     static mut N: usize = 0;
 
     let components = query.one();
@@ -34,28 +36,32 @@ fn print_dt((query,): (Query<(TimeComponent,)>,)) {
     }
 }
 
-fn print_key((query,): (Query<(KeyComponent,)>,)) {
+#[system]
+fn print_key(query: Query<(KeyComponent,)>) {
     let components = query.one();
     let key        = components.0.borrow();
 
     println!("{:?}({})", key.code, key.down);
 }
 
-fn print_mouse_position((query,): (Query<(MousePositionComponent,)>,)) {
+#[system]
+fn print_mouse_position(query: Query<(MousePositionComponent,)>) {
     let components     = query.one();
     let mouse_position = components.0.borrow();
 
     println!("x: {}, y: {}", mouse_position.x, mouse_position.y);
 }
 
-fn print_mouse_button((query,): (Query<(MouseButtonComponent,)>,)) {
+#[system]
+fn print_mouse_button(query: Query<(MouseButtonComponent,)>) {
     let components   = query.one();
     let mouse_button = components.0.borrow();
 
     println!("{:?}({})", mouse_button.button, mouse_button.down);
 }
 
-fn print_mouse_wheel((query,): (Query<(MouseWheelComponent,)>,)) {
+#[system]
+fn print_mouse_wheel(query: Query<(MouseWheelComponent,)>) {
     let components   = query.one();
     let mouse_scroll = components.0.borrow();
 
