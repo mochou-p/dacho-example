@@ -3,68 +3,70 @@
 #[allow(clippy::wildcard_imports)]
 use dacho::*;
 
+
 fn main() {
     App::new("dacho example")
-        .add_system(Schedule::Start,         spawn_circle)
-        .add_system(Schedule::Update,        print_dt)
-        .add_system(Schedule::Keyboard,      print_key)
-        .add_system(Schedule::MouseMovement, print_mouse_position)
-        .add_system(Schedule::MouseButton,   print_mouse_button)
-        .add_system(Schedule::MouseWheel,    print_mouse_wheel)
+        .add_system(Schedule::Start,    spawn_entities        )
+        .add_system(Schedule::Update,   move_players          )
+        .add_system(Schedule::Keyboard, print_player_positions)
         .run();
 }
 
 #[system]
-fn spawn_circle(query: Query<(WorldComponent,)>) {
-    query.one().0.borrow().get(|mut world| {
-        world.spawn((MeshComponent::circle(V3::ZERO, 0.5),));
+fn spawn_entities(q_world: Query<WorldComponent>) {
+    q_world.one().0.borrow().get(|mut world| {
+        world.spawn((MeshComponent::circle(V3::ZERO, 0.3),));
+
+        world.spawn((Player("Miku"), Position { x: -1.0, y: 0.0 }, Velocity { x: 1.0, y: 0.0 }));
+        world.spawn((Player("Len"),  Position { x:  0.0, y: 0.0 }, Velocity { x: 2.0, y: 0.0 }));
+        world.spawn((Player("Rin"),  Position { x:  1.0, y: 0.0 }, Velocity { x: 3.0, y: 1.0 }));
     });
 }
 
 #[system]
-fn print_dt(query: Query<(TimeComponent,)>) {
-    static mut N: usize = 0;
+fn move_players(
+    q_time:    Query<TimeComponent>,
+    q_players: Query<(Player, Position, Velocity)>
+) {
+    let (time_c,) = q_time.one();
+    let  time     = time_c.borrow();
 
-    let components = query.one();
-    let time       = components.0.borrow();
+    for (_, position, velocity) in q_players.all() {
+        let mut pos = position.borrow_mut();
+        let     vel = velocity.borrow();
 
-    if unsafe { N } == 100 {
-        println!("{}", time.delta);
-        unsafe { N = 0; }
-    } else {
-        unsafe { N += 1; }
+        pos.x += vel.x * time.delta;
+        pos.y += vel.y * time.delta;
     }
 }
 
 #[system]
-fn print_key(query: Query<(KeyComponent,)>) {
-    let components = query.one();
-    let key        = components.0.borrow();
+fn print_player_positions(
+    q_key:     Query<KeyComponent>,
+    q_players: Query<(Player, Position)>
+) {
+    let (key_c,) = q_key.one();
+    let  key     = key_c.borrow();
 
-    println!("{:?}({})", key.code, key.down);
+    if key.down && key.code == KeyCode::Space {
+        for (player, position) in q_players.all() {
+            let name = player.borrow().0;
+            let pos  = position.borrow();
+
+            println!("{}:\t{},\t{}", name, pos.x, pos.y);
+        }
+    }
 }
 
-#[system]
-fn print_mouse_position(query: Query<(MousePositionComponent,)>) {
-    let components     = query.one();
-    let mouse_position = components.0.borrow();
+struct Player(&'static str);
 
-    println!("x: {}, y: {}", mouse_position.x, mouse_position.y);
+struct Position {
+    x: f32,
+    y: f32
 }
 
-#[system]
-fn print_mouse_button(query: Query<(MouseButtonComponent,)>) {
-    let components   = query.one();
-    let mouse_button = components.0.borrow();
-
-    println!("{:?}({})", mouse_button.button, mouse_button.down);
-}
-
-#[system]
-fn print_mouse_wheel(query: Query<(MouseWheelComponent,)>) {
-    let components   = query.one();
-    let mouse_scroll = components.0.borrow();
-
-    println!("x: {}, y: {}", mouse_scroll.x, mouse_scroll.y);
+struct Velocity {
+    x: f32,
+    y: f32
 }
 

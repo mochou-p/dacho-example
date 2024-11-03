@@ -3,12 +3,15 @@
 [package]
 name         = "dacho-example"
 version      = "0.2.0"
-rust-version = "1.81.0"
-authors      = ["mochou-p"]
+
 edition      = "2021"
+rust-version = "1.81.0"
+
+authors      = ["mochou-p"]
 description  = "Example game for dacho"
-repository   = "https://github.com/mochou-p/dacho-example"
 license      = "MIT OR Apache-2.0"
+repository   = "https://github.com/mochou-p/dacho-example"
+
 keywords     = ["dacho", "game", "example", "template", "3D"]
 categories   = ["game-development", "games", "multimedia", "graphics", "rendering"]
 
