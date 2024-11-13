@@ -25,7 +25,8 @@ panic         = "abort"
 codegen-units = 1
 
 [lints.clippy]
-all      = "deny"
-nursery  = "deny"
-pedantic = "deny"
+all      = "forbid"
+pedantic = "forbid"
+nursery  = "forbid"
+cargo    = "deny"
 
