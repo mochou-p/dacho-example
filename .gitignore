@@ -1,5 +1,6 @@
 # dacho-example/.gitignore
 
-/private
-/target
+.cargo/
+.private/
+target/
 
