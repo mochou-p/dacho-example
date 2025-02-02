@@ -6,65 +6,45 @@ use dacho::prelude::*;
 
 
 #[derive(Default)]
-struct World {
+struct MyGame {
     cursor_position: PhysicalPosition<f64>,
     window_size:     Vec3,
     aspect_ratio:    Vec3,
     movement:        Vec2,
-    clicked:         bool,
-
-    commands: Commands,
-    meshes:   Meshes,
-    camera:   Camera
-}
-
-impl DachoWorld for World {
-    #[inline]
-    fn get_mut_commands(&mut self) -> &mut Commands {
-        &mut self.commands
-    }
-
-    #[inline]
-    fn get_mut_meshes(&mut self) -> &mut Meshes {
-        &mut self.meshes
-    }
-
-    #[inline]
-    fn get_mut_camera(&mut self) -> &mut Camera {
-        &mut self.camera
-    }
+    clicked:         bool
 }
 
 fn main() {
-    let game = Game::<World> {
+    let game = Game::<MyGame> {
         title:            "dacho example",
         start_systems:    &[start   ],
         update_systems:   &[update  ],
         keyboard_systems: &[keyboard],
         mouse_systems:    &[mouse   ],
         cursor_systems:   &[cursor  ],
+        end_systems:      &[end     ],
         ..Default::default()
     };
 
     game.run();
 }
 
-fn start(world: &mut World) {
-    world.window_size  = Vec3 { x: 1600.0, y: 900.0, z: 1.0 };
+fn start(data: &mut Data<MyGame>) {
+    data.game.window_size  = Vec3 { x: 1600.0, y: 900.0, z: 1.0 };
 
-    world.aspect_ratio = Vec3 {
-        x: world.window_size.x / world.window_size.y,
+    data.game.aspect_ratio = Vec3 {
+        x: data.game.window_size.x / data.game.window_size.y,
         y: 1.0,
         z: 1.0
     };
 
-    world.meshes.push(
+    data.engine.meshes.push(
         Mesh::quad(
             Vec3::ZERO,
-            Vec2 { x: 1000.0 * world.aspect_ratio.x, y: 0.0003 }
+            Vec2 { x: 1000.0 * data.game.aspect_ratio.x, y: 0.0003 }
         )
     );
-    world.meshes.push(
+    data.engine.meshes.push(
         Mesh::quad(
             Vec3::ZERO,
             Vec2 { x: 0.0003, y: 1000.0 }
@@ -72,18 +52,18 @@ fn start(world: &mut World) {
     );
 }
 
-fn update(world: &mut World, time: &Time) {
-    if world.movement != Vec2::ZERO {
-        world.camera.move_by(
-            (world.movement.normalize() * time.delta)
+fn update(data: &mut Data<MyGame>, time: &Time) {
+    if data.game.movement != Vec2::ZERO {
+        data.engine.camera.move_by(
+            (data.game.movement.normalize() * time.delta)
                 .extend(0.0)
         );
 
-        try_draw(world);
+        try_draw(data);
     }
 }
 
-fn keyboard(world: &mut World, event: &KeyEvent) {
+fn keyboard(data: &mut Data<MyGame>, event: &KeyEvent) {
     use {
         PhysicalKey::Code,
         KeyCode::{
@@ -100,42 +80,46 @@ fn keyboard(world: &mut World, event: &KeyEvent) {
 
     match event.physical_key {
         Code(Escape | KeyQ) => {
-            world.commands.submit(Command::Exit);
+            data.engine.commands.submit(Command::Exit);
         },
 
-        Code(KeyW | ArrowUp   ) => { world.movement.y -= 1.0 * s; },
-        Code(KeyA | ArrowLeft ) => { world.movement.x -= 1.0 * s; },
-        Code(KeyS | ArrowDown ) => { world.movement.y += 1.0 * s; },
-        Code(KeyD | ArrowRight) => { world.movement.x += 1.0 * s; },
+        Code(KeyW | ArrowUp   ) => { data.game.movement.y -= 1.0 * s; },
+        Code(KeyA | ArrowLeft ) => { data.game.movement.x -= 1.0 * s; },
+        Code(KeyS | ArrowDown ) => { data.game.movement.y += 1.0 * s; },
+        Code(KeyD | ArrowRight) => { data.game.movement.x += 1.0 * s; },
 
         Code(Space) => if event.state.is_pressed() {
-            world.camera.move_to(Vec2::ZERO);
+            data.engine.camera.move_to(Vec2::ZERO);
         },
         _ => ()
     }
 }
 
-fn mouse(world: &mut World, button: MouseButton, state: ElementState) {
+fn mouse(data: &mut Data<MyGame>, button: MouseButton, state: ElementState) {
     if matches!(button, MouseButton::Left) {
-        world.clicked = state.is_pressed();
+        data.game.clicked = state.is_pressed();
     }
 }
 
-fn cursor(world: &mut World, position: &PhysicalPosition<f64>) {
-    world.cursor_position = *position;
+fn cursor(data: &mut Data<MyGame>, position: &PhysicalPosition<f64>) {
+    data.game.cursor_position = *position;
 
-    try_draw(world);
+    try_draw(data);
 }
 
-fn try_draw(world: &mut World) {
-    if world.clicked {
-        let mut pos  = helpers::cursor_position_to_vec3(&world.cursor_position);
-        pos         /= world.window_size;
-        pos         -= consts::VEC3_HALF_XY;
-        pos         *= world.aspect_ratio;
-        pos         += world.camera.position.truncate().extend(0.0);
+fn end(_data: &mut Data<MyGame>) {
+    println!("bye");
+}
 
-        world.meshes.push(
+fn try_draw(data: &mut Data<MyGame>) {
+    if data.game.clicked {
+        let mut pos  = helpers::cursor_position_to_vec3(&data.game.cursor_position);
+        pos         /= data.game.window_size;
+        pos         -= consts::VEC3_HALF_XY;
+        pos         *= data.game.aspect_ratio;
+        pos         += data.engine.camera.position.truncate().extend(0.0);
+
+        data.engine.meshes.push(
             Mesh::quad(
                 pos,
                 Vec2::splat(0.0075)
