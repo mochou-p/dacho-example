@@ -389,9 +389,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "dacho-camera-c"
+version = "0.0.0"
+dependencies = [
+ "glam",
+]
+
+[[package]]
 name = "dacho-components"
 version = "0.0.0"
 dependencies = [
+ "dacho-camera-c",
  "dacho-mesh-c",
 ]
 
@@ -410,6 +418,7 @@ dependencies = [
  "dacho-log",
  "dacho-renderer",
  "dacho-window",
+ "glam",
  "tokio",
  "winit",
 ]
@@ -447,8 +456,8 @@ dependencies = [
  "anyhow",
  "ash",
  "ash-window",
+ "dacho-components",
  "dacho-log",
- "dacho-mesh-c",
  "dacho-shader",
  "dacho-window",
  "futures",
