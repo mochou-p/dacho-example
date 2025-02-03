@@ -14,7 +14,21 @@ struct MyGame {
     clicked:         bool
 }
 
+static THREE_D: bool = true;
+
 fn main() {
+    let data = if THREE_D {
+        Data::<MyGame> {
+            engine: EngineData {
+                camera: Camera::default_3d(),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    } else {
+        Data::<MyGame>::default()
+    };
+
     let game = Game::<MyGame> {
         title:            "dacho example",
         start_systems:    &[start   ],
@@ -23,6 +37,7 @@ fn main() {
         mouse_systems:    &[mouse   ],
         cursor_systems:   &[cursor  ],
         end_systems:      &[end     ],
+        data,
         ..Default::default()
     };
 
@@ -89,7 +104,8 @@ fn keyboard(data: &mut Data<MyGame>, event: &KeyEvent) {
         Code(KeyD | ArrowRight) => { data.game.movement.x += 1.0 * s; },
 
         Code(Space) => if event.state.is_pressed() {
-            data.engine.camera.move_to(Vec2::ZERO);
+            let z = data.engine.camera.get_position().z;
+            data.engine.camera.move_to(Vec3 { x: 0.0, y: 0.0, z });
         },
         _ => ()
     }
@@ -98,6 +114,8 @@ fn keyboard(data: &mut Data<MyGame>, event: &KeyEvent) {
 fn mouse(data: &mut Data<MyGame>, button: MouseButton, state: ElementState) {
     if matches!(button, MouseButton::Left) {
         data.game.clicked = state.is_pressed();
+
+        try_draw(data);
     }
 }
 
@@ -117,7 +135,7 @@ fn try_draw(data: &mut Data<MyGame>) {
         pos         /= data.game.window_size;
         pos         -= consts::VEC3_HALF_XY;
         pos         *= data.game.aspect_ratio;
-        pos         += data.engine.camera.position.truncate().extend(0.0);
+        pos         += data.engine.camera.get_position().truncate().extend(0.0);
 
         data.engine.meshes.push(
             Mesh::quad(

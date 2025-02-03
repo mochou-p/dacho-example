@@ -36,7 +36,7 @@ fn vertex(in: VertexInput) -> VertexOutput {
         in.model_row4
     );
 
-    out.position = ubo.proj * ubo.view * model * pos;
+    out.position = ubo.proj * (ubo.view * (model * pos));
 
     return out;
 }
