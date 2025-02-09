@@ -20,7 +20,9 @@ struct VertexInput {
 }
 
 struct VertexOutput {
-    @builtin(position) position: vec4<f32>
+    @builtin(position) position: vec4<f32>,
+
+    @location(0) normal: vec3<f32>
 }
 
 @vertex
@@ -37,6 +39,7 @@ fn vertex(in: VertexInput) -> VertexOutput {
     );
 
     out.position = ubo.proj * (ubo.view * (model * pos));
+    out.normal   = in.normal;
 
     return out;
 }
@@ -46,10 +49,13 @@ struct FragmentOutput {
 }
 
 @fragment
-fn fragment() -> FragmentOutput {
+fn fragment(in: VertexOutput) -> FragmentOutput {
     var out: FragmentOutput;
 
-    out.color = vec4<f32>(1.0);
+    out.color = vec4<f32>(
+        abs(in.normal),
+        1.0
+    );
 
     return out;
 }

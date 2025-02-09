@@ -1,6 +1,6 @@
 // dacho-example/src/main.rs
 
-#![expect(clippy::multiple_crate_versions,  reason = "inside dacho")]
+#![expect(clippy::multiple_crate_versions, reason = "inside dacho")]
 
 use dacho::prelude::*;
 
@@ -39,8 +39,7 @@ fn start(data: &mut Data<MyGame>) {
 fn update(data: &mut Data<MyGame>, time: &Time) {
     if data.game.camera_movement != Vec3::ZERO {
         data.engine.camera.y_angle_relative_move_by(
-            data.game.camera_movement
-                * time.delta
+            data.game.camera_movement * time.delta
         );
     }
 }
@@ -67,7 +66,6 @@ fn keyboard(data: &mut Data<MyGame>, event: &KeyEvent) {
             let sign = {
                 let is_pressed = event.state.is_pressed(); // false/true
                 let n          = i8::from(is_pressed);     //     0/1
-
                 f32::from(n * 2 - 1)                       //  -1.0/1.0
             };
 
