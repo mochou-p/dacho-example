@@ -1,43 +1,22 @@
 // dacho-example/src/main.rs
 
-#![expect(clippy::multiple_crate_versions, reason = "inside dacho")]
+#![expect(clippy::multiple_crate_versions,  reason = "inside dacho")]
 
 use dacho::prelude::*;
 
 
 #[derive(Default)]
 struct MyGame {
-    cursor_position: PhysicalPosition<f64>,
-    window_size:     Vec3,
-    aspect_ratio:    Vec3,
-    movement:        Vec2,
-    clicked:         bool
+    camera_movement: Vec3
 }
 
-static THREE_D: bool = true;
-
 fn main() {
-    let data = if THREE_D {
-        Data::<MyGame> {
-            engine: EngineData {
-                camera: Camera::default_3d(),
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    } else {
-        Data::<MyGame>::default()
-    };
-
     let game = Game::<MyGame> {
         title:            "dacho example",
         start_systems:    &[start   ],
         update_systems:   &[update  ],
         keyboard_systems: &[keyboard],
-        mouse_systems:    &[mouse   ],
-        cursor_systems:   &[cursor  ],
-        end_systems:      &[end     ],
-        data,
+        motion_systems:   &[motion  ],
         ..Default::default()
     };
 
@@ -45,127 +24,74 @@ fn main() {
 }
 
 fn start(data: &mut Data<MyGame>) {
-    data.game.window_size  = Vec3 { x: 1600.0, y: 900.0, z: 1.0 };
+    data.engine.meshes.push(Mesh::cube  (Vec3::ZERO,               1.0 ));
+    data.engine.meshes.push(Mesh::cube  (Vec3::X,                  0.3 ));
+    data.engine.meshes.push(Mesh::sphere(Vec3::Y,                  0.15));
+    data.engine.meshes.push(Mesh::cube  (Vec3::Z * -5.0 + Vec3::Y, 0.1 ));
+    data.engine.meshes.push(Mesh::cube  (Vec3::Z * -5.0 - Vec3::Y, 0.1 ));
 
-    data.game.aspect_ratio = Vec3 {
-        x: data.game.window_size.x / data.game.window_size.y,
-        y: 1.0,
-        z: 1.0
-    };
-
-    data.engine.meshes.push(
-        Mesh::quad(
-            Vec3::ZERO,
-            Vec2 { x: 1000.0 * data.game.aspect_ratio.x, y: 0.0003 }
-        )
-    );
-    data.engine.meshes.push(
-        Mesh::quad(
-            Vec3::ZERO,
-            Vec2 { x: 0.0003, y: 1000.0 }
-        )
-    );
+    data.engine.commands.extend([
+        Command::SetCursorVisible(false),
+        Command::SetCursorGrab(CursorGrabMode::Confined)
+    ]);
 }
 
 fn update(data: &mut Data<MyGame>, time: &Time) {
-    if data.game.movement != Vec2::ZERO {
-        data.engine.camera.move_by(
-            (data.game.movement.normalize() * time.delta)
-                .extend(0.0)
+    if data.game.camera_movement != Vec3::ZERO {
+        data.engine.camera.y_angle_relative_move_by(
+            data.game.camera_movement
+                * time.delta
         );
-
-        try_draw(data);
     }
 }
 
 fn keyboard(data: &mut Data<MyGame>, event: &KeyEvent) {
-    use {
-        PhysicalKey::Code,
-        KeyCode::{
-            ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Escape,
-            KeyA, KeyD, KeyQ, KeyS, KeyW, Space
-        }
-    };
-
     if event.repeat {
         return;
     }
 
-    let s = helpers::sign_from_element_state(event.state);
+    let PhysicalKey::Code(key_code) = event.physical_key else { return; };
 
-    match event.physical_key {
-        Code(Escape | KeyQ) => {
-            data.engine.commands.submit(Command::Exit);
+    match key_code {
+        KeyCode::Escape => {
+            data.engine.commands.push(
+                Command::Exit
+            );
         },
+        KeyCode::KeyW
+        | KeyCode::KeyA
+        | KeyCode::KeyS
+        | KeyCode::KeyD
+        | KeyCode::Space
+        | KeyCode::ShiftLeft => {
+            let sign = {
+                let is_pressed = event.state.is_pressed(); // false/true
+                let n          = i8::from(is_pressed);     //     0/1
 
-        Code(KeyW | ArrowUp   ) => { data.game.movement.y -= 1.0 * s; },
-        Code(KeyA | ArrowLeft ) => { data.game.movement.x -= 1.0 * s; },
-        Code(KeyS | ArrowDown ) => { data.game.movement.y += 1.0 * s; },
-        Code(KeyD | ArrowRight) => { data.game.movement.x += 1.0 * s; },
+                f32::from(n * 2 - 1)                       //  -1.0/1.0
+            };
 
-        Code(Space) => if event.state.is_pressed() {
-            let z = data.engine.camera.get_position().z;
-            data.engine.camera.move_to(Vec3 { x: 0.0, y: 0.0, z });
+            let speed    = 2.5 * sign;
+            let movement = &mut data.game.camera_movement;
+
+            match key_code {
+                KeyCode::KeyW      => { movement.z += speed; },
+                KeyCode::KeyA      => { movement.x -= speed; },
+                KeyCode::KeyS      => { movement.z -= speed; },
+                KeyCode::KeyD      => { movement.x += speed; },
+                KeyCode::Space     => { movement.y -= speed; },
+                KeyCode::ShiftLeft => { movement.y += speed; },
+                _ => ()
+            }
         },
         _ => ()
     }
 }
 
-fn mouse(data: &mut Data<MyGame>, button: MouseButton, state: ElementState) {
-    if matches!(button, MouseButton::Left) {
-        data.game.clicked = state.is_pressed();
+fn motion(data: &mut Data<MyGame>, delta: &(f64, f64)) {
+    #[expect(clippy::cast_possible_truncation, reason = "dont need double precision")]
+    let rotation_delta = Vec3 { x: -delta.1 as f32, y: delta.0 as f32, z: 0.0 } * 0.005;
 
-        try_draw(data);
-    }
-}
-
-fn cursor(data: &mut Data<MyGame>, position: &PhysicalPosition<f64>) {
-    data.game.cursor_position = *position;
-
-    try_draw(data);
-}
-
-fn end(_data: &mut Data<MyGame>) {
-    println!("bye");
-}
-
-fn try_draw(data: &mut Data<MyGame>) {
-    if data.game.clicked {
-        let mut pos  = helpers::cursor_position_to_vec3(&data.game.cursor_position);
-        pos         /= data.game.window_size;
-        pos         -= consts::VEC3_HALF_XY;
-        pos         *= data.game.aspect_ratio;
-        pos         += data.engine.camera.get_position().truncate().extend(0.0);
-
-        data.engine.meshes.push(
-            Mesh::quad(
-                pos,
-                Vec2::splat(0.0075)
-            )
-        );
-    }
-}
-
-mod consts {
-    use dacho::prelude::*;
-
-    pub static VEC3_HALF_XY: Vec3 = Vec3 { x: 0.5, y: 0.5, z: 0.0 };
-}
-
-mod helpers {
-    use dacho::prelude::*;
-
-    #[inline]
-    #[must_use]
-    #[expect(clippy::cast_possible_truncation, reason = "no need for double precision")]
-    pub const fn cursor_position_to_vec3(position: &PhysicalPosition<f64>) -> Vec3 {
-        Vec3 { x: position.x as f32, y: position.y as f32, z: 0.0 }
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn sign_from_element_state(state: ElementState) -> f32 {
-        f32::from(i8::from(state.is_pressed()) * 2 - 1)
-    }
+    data.engine.camera.rotate_by(rotation_delta);
 }
 
