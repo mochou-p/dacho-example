@@ -2,33 +2,64 @@
 
 #![expect(clippy::multiple_crate_versions, reason = "inside dacho")]
 
+use core::time::Duration;
+
 use dacho::prelude::*;
 
 
+type D = Data<GameData, GameEvent>;
+type E = Event<GameEvent>;
+
 #[derive(Default)]
-struct MyGame {
+struct GameData {
     camera_movement: Vec3
 }
 
-fn main() {
-    let game = Game::<MyGame> {
-        title:            "dacho example",
-        start_systems:    &[start   ],
-        update_systems:   &[update  ],
-        keyboard_systems: &[keyboard],
-        motion_systems:   &[motion  ],
-        ..Default::default()
-    };
-
-    game.run();
+enum GameEvent {
+    SayHi,
+    SayHey
 }
 
-fn start(data: &mut Data<MyGame>) {
-    data.engine.meshes.push(Mesh::cube  (Vec3::ZERO,               1.0 ));
-    data.engine.meshes.push(Mesh::cube  (Vec3::X,                  0.3 ));
-    data.engine.meshes.push(Mesh::sphere(Vec3::Y,                  0.15));
-    data.engine.meshes.push(Mesh::cube  (Vec3::Z * -5.0 + Vec3::Y, 0.1 ));
-    data.engine.meshes.push(Mesh::cube  (Vec3::Z * -5.0 - Vec3::Y, 0.1 ));
+fn main() {
+    Game {
+	event_handler,
+	..default()
+    }.run();
+}
+
+fn event_handler(data: &mut D, event: &E) {
+    match event {
+	Event::Engine(engine_event) => engine_event_handler(data, engine_event),
+	Event::Game(game_event)     =>   game_event_handler(        game_event)
+    }
+}
+
+fn engine_event_handler(data: &mut D, engine_event: &EngineEvent) {
+    match engine_event {
+	EngineEvent::Start  =>  start(data),
+	EngineEvent::Update => update(data),
+	EngineEvent::Device   { event, .. } => device(data, event),
+	EngineEvent::Keyboard { key, is_pressed, repeat, .. } =>
+	    keyboard(data, key, *is_pressed, *repeat),
+	_ => ()
+    }
+}
+
+fn game_event_handler(game_event: &GameEvent) {
+    println!("{}", match game_event {
+	GameEvent::SayHi  => { "hi"  },
+	GameEvent::SayHey => { "hey" }
+    });
+}
+
+fn start(data: &mut D) {
+    let meshes = &mut data.engine.meshes;
+
+    meshes.push(Mesh::cube  (Vec3::ZERO,               1.0 ));
+    meshes.push(Mesh::cube  (Vec3::X,                  0.3 ));
+    meshes.push(Mesh::sphere(Vec3::Y,                  0.15));
+    meshes.push(Mesh::cube  (Vec3::Z * -5.0 + Vec3::Y, 0.1 ));
+    meshes.push(Mesh::cube  (Vec3::Z * -5.0 - Vec3::Y, 0.1 ));
 
     data.engine.commands.extend([
         Command::SetCursorVisible(false),
@@ -36,43 +67,55 @@ fn start(data: &mut Data<MyGame>) {
     ]);
 }
 
-fn update(data: &mut Data<MyGame>, time: &Time) {
+fn update(data: &mut D) {
     if data.game.camera_movement != Vec3::ZERO {
         data.engine.camera.y_angle_relative_move_by(
-            data.game.camera_movement * time.delta
+            data.game.camera_movement * data.engine.time.delta
         );
     }
 }
 
-fn keyboard(data: &mut Data<MyGame>, event: &KeyEvent) {
-    if event.repeat {
-        return;
+fn keyboard(data: &mut D, key: &Key, is_pressed: bool, repeat: bool) {
+    if repeat {
+	return;
     }
 
-    let PhysicalKey::Code(key_code) = event.physical_key else { return; };
+    let PhysicalKey::Code(code) = key.physical else { return; };
 
-    match key_code {
-        KeyCode::Escape => {
-            data.engine.commands.push(
-                Command::Exit
-            );
-        },
-        KeyCode::KeyW
+    match code {
+	KeyCode::Escape => {
+	    data.engine.commands.push(Command::Exit);
+	},
+	KeyCode::Tab => {
+	    if is_pressed {
+		data.engine.events.do_after(
+		    GameEvent::SayHi,
+		    Duration::from_secs(3),
+		    &data.engine.time
+		);
+	    }
+	},
+	KeyCode::Enter => {
+	    if is_pressed {
+		data.engine.events.do_after(
+		    GameEvent::SayHey,
+		    Duration::from_secs(1),
+		    &data.engine.time
+		);
+	    }
+	},
+	KeyCode::KeyW
         | KeyCode::KeyA
         | KeyCode::KeyS
         | KeyCode::KeyD
         | KeyCode::Space
         | KeyCode::ShiftLeft => {
-            let sign = {
-                let is_pressed = event.state.is_pressed(); // false/true
-                let n          = i8::from(is_pressed);     //     0/1
-                f32::from(n * 2 - 1)                       //  -1.0/1.0
-            };
-
+	    // false/true -> 0/1 -> -1/1
+            let sign     = f32::from(i8::from(is_pressed) * 2 - 1);
             let speed    = 2.5 * sign;
             let movement = &mut data.game.camera_movement;
 
-            match key_code {
+            match code {
                 KeyCode::KeyW      => { movement.z += speed; },
                 KeyCode::KeyA      => { movement.x -= speed; },
                 KeyCode::KeyS      => { movement.z -= speed; },
@@ -82,14 +125,19 @@ fn keyboard(data: &mut Data<MyGame>, event: &KeyEvent) {
                 _ => ()
             }
         },
-        _ => ()
+	_ => ()
     }
 }
 
-fn motion(data: &mut Data<MyGame>, delta: &(f64, f64)) {
+fn device(data: &mut D, event: &DeviceEvent) {
+    if let DeviceEvent::MouseMotion { delta } = event {
+	mouse_motion(data, delta);
+    }
+}
+
+fn mouse_motion(data: &mut D, delta: &(f64, f64)) {
     #[expect(clippy::cast_possible_truncation, reason = "dont need double precision")]
     let rotation_delta = Vec3 { x: -delta.1 as f32, y: delta.0 as f32, z: 0.0 } * 0.005;
 
     data.engine.camera.rotate_by(rotation_delta);
 }
-
