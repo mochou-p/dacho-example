@@ -52,10 +52,7 @@ struct FragmentOutput {
 fn fragment(in: VertexOutput) -> FragmentOutput {
     var out: FragmentOutput;
 
-    out.color = vec4<f32>(
-        saturate(in.normal) * 0.97 + 0.03,
-        1.0
-    );
+    out.color = vec4<f32>(in.normal, 1.0);
 
     return out;
 }

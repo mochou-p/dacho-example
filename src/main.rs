@@ -23,6 +23,7 @@ enum GameEvent {
 fn main() {
     Game {
 	event_handler,
+        fixed_update: Some(1.0),
 	..default()
     }.run();
 }
@@ -36,8 +37,11 @@ fn event_handler(data: &mut D, event: &E) {
 
 fn engine_event_handler(data: &mut D, engine_event: &EngineEvent) {
     match engine_event {
-	EngineEvent::Start  =>  start(data),
-	EngineEvent::Update => update(data),
+	EngineEvent::Start => start(data),
+        EngineEvent::FixedUpdate { .. } => {
+            println!("{:.2}s", data.engine.time.elapsed);
+        },
+	EngineEvent::Update   { .. }        => update(data),
 	EngineEvent::Device   { event, .. } => device(data, event),
 	EngineEvent::Keyboard { key, is_pressed, repeat, .. } =>
 	    keyboard(data, key, *is_pressed, *repeat),
