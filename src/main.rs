@@ -22,37 +22,37 @@ enum GameEvent {
 
 fn main() {
     Game {
-	event_handler,
-        fixed_update: Some(1.0),
-	..default()
+        event_handler,
+        fixed_update: Some(1.0), // in seconds
+        ..default()
     }.run();
 }
 
 fn event_handler(data: &mut D, event: &E) {
     match event {
-	Event::Engine(engine_event) => engine_event_handler(data, engine_event),
-	Event::Game(game_event)     =>   game_event_handler(        game_event)
+        Event::Engine(engine_event) => engine_event_handler(data, engine_event),
+        Event::Game(game_event)     =>   game_event_handler(        game_event)
     }
 }
 
 fn engine_event_handler(data: &mut D, engine_event: &EngineEvent) {
     match engine_event {
-	EngineEvent::Start => start(data),
+        EngineEvent::Start => start(data),
         EngineEvent::FixedUpdate { .. } => {
             println!("{:.2}s", data.engine.time.elapsed);
         },
-	EngineEvent::Update   { .. }        => update(data),
-	EngineEvent::Device   { event, .. } => device(data, event),
-	EngineEvent::Keyboard { key, is_pressed, repeat, .. } =>
-	    keyboard(data, key, *is_pressed, *repeat),
-	_ => ()
+        EngineEvent::Update   { .. }        => update(data),
+        EngineEvent::Device   { event, .. } => device(data, event),
+        EngineEvent::Keyboard { key, is_pressed, repeat, .. } =>
+            keyboard(data, key, *is_pressed, *repeat),
+        _ => ()
     }
 }
 
 fn game_event_handler(game_event: &GameEvent) {
     println!("{}", match game_event {
-	GameEvent::SayHi  => { "hi"  },
-	GameEvent::SayHey => { "hey" }
+        GameEvent::SayHi  => { "hi"  },
+        GameEvent::SayHey => { "hey" }
     });
 }
 
@@ -81,40 +81,40 @@ fn update(data: &mut D) {
 
 fn keyboard(data: &mut D, key: &Key, is_pressed: bool, repeat: bool) {
     if repeat {
-	return;
+        return;
     }
 
     let PhysicalKey::Code(code) = key.physical else { return; };
 
     match code {
-	KeyCode::Escape => {
-	    data.engine.commands.push(Command::Exit);
-	},
-	KeyCode::Tab => {
-	    if is_pressed {
-		data.engine.events.do_after(
-		    GameEvent::SayHi,
-		    Duration::from_secs(3),
-		    &data.engine.time
-		);
-	    }
-	},
-	KeyCode::Enter => {
-	    if is_pressed {
-		data.engine.events.do_after(
-		    GameEvent::SayHey,
-		    Duration::from_secs(1),
-		    &data.engine.time
-		);
-	    }
-	},
-	KeyCode::KeyW
+        KeyCode::Escape => {
+            data.engine.commands.push(Command::Exit);
+        },
+        KeyCode::Tab => {
+            if is_pressed {
+                data.engine.events.do_after(
+                    GameEvent::SayHi,
+                    Duration::from_secs(3),
+                    &data.engine.time
+                );
+            }
+        },
+        KeyCode::Enter => {
+            if is_pressed {
+                data.engine.events.do_after(
+                    GameEvent::SayHey,
+                    Duration::from_secs(1),
+                    &data.engine.time
+                );
+            }
+        },
+        KeyCode::KeyW
         | KeyCode::KeyA
         | KeyCode::KeyS
         | KeyCode::KeyD
         | KeyCode::Space
         | KeyCode::ShiftLeft => {
-	    // false/true -> 0/1 -> -1/1
+            // false/true -> 0/1 -> -1/1
             let sign     = f32::from(i8::from(is_pressed) * 2 - 1);
             let speed    = 2.5 * sign;
             let movement = &mut data.game.camera_movement;
@@ -129,13 +129,13 @@ fn keyboard(data: &mut D, key: &Key, is_pressed: bool, repeat: bool) {
                 _ => ()
             }
         },
-	_ => ()
+        _ => ()
     }
 }
 
 fn device(data: &mut D, event: &DeviceEvent) {
     if let DeviceEvent::MouseMotion { delta } = event {
-	mouse_motion(data, delta);
+        mouse_motion(data, delta);
     }
 }
 
